@@ -3,19 +3,19 @@ import axios from "axios";
 import Character from "./components/Character";
 import Spinner from "./components/Spinner";
 import "./App.css";
+import { sortCharacters } from "./utils/sort";
 
 class App extends Component {
-  state = {};
+  state = { simpsons: [] };
 
   async componentDidMount() {
     try {
       const { data } = await axios.get(
         `https://thesimpsonsquoteapi.glitch.me/quotes?count=25`
       );
-
       //add a unique ID (most decent APIs will do this for you automatically)
       //also adding a liked property
-      data.array.forEach((element) => {
+      data.forEach((element) => {
         element.id = Math.round(Math.random() * 1000000);
         element.liked = false;
       });
@@ -27,22 +27,26 @@ class App extends Component {
   }
 
   onLikeClick = (id) => {
-    const simpsons = { ...this.state.simpsons };
+    const simpsons = [...this.state.simpsons];
     const index = simpsons.findIndex((item) => item.id === id);
     simpsons[index].liked = !simpsons[index].liked;
     this.setState({ simpsons });
   };
 
   onDeleteClick = (id) => {
-    const simpsons = { ...this.state.simpsons };
+    const simpsons = [...this.state.simpsons];
     const index = simpsons.findIndex((item) => item.id === id);
-    simpsons.splice(index);
+    simpsons.splice(index, 1);
     this.setState({ simpsons });
+  };
+
+  onSortSelection = (e) => {
+    this.setState({ sort: e.target.value });
   };
 
   render() {
     console.log(this.state);
-    const { simpsons } = this.state;
+    const { simpsons, sort } = this.state;
 
     if (!simpsons) {
       return (
@@ -52,9 +56,25 @@ class App extends Component {
       );
     }
 
+    //copy the Simpsons
+    const _simpsons = [...simpsons];
+
+    //call my sort logic
+    sortCharacters(sort, _simpsons);
+
     return (
       <div className="container">
-        {simpsons.map((character) => {
+        <div className="controls">
+          <label htmlFor="sort">Sort by</label>
+          <select name="sort" id="sort" onChange={this.onSortSelection}>
+            <option value="character-az">Character - A to Z</option>
+            <option value="character-za">Character - Z to A</option>
+            <option value="quote-az">Quote - A to Z</option>
+            <option value="quote-za">Quote - Z to A</option>
+          </select>
+        </div>
+
+        {_simpsons.map((character) => {
           return (
             <Character
               key={character.id}
